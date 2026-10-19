@@ -14,16 +14,16 @@
     "test:e2e:smoke": "playwright test --config=testing/playwright.config.js testing/e2e/00-basic-smoke.spec.js testing/e2e/02-idea-management.spec.js testing/e2e/06-security-authorization.spec.js testing/e2e/19-ideas-pagination.spec.js"
   },
   "devDependencies": {
-    "@jest/globals": "^30.4.1",
-    "@playwright/test": "^1.62.1",
-    "@testcontainers/postgresql": "^12.1.0",
+    "@jest/globals": "^30.5.2",
+    "@playwright/test": "^1.64.1",
+    "@testcontainers/postgresql": "^12.2.1",
     "dotenv": "^17.4.2",
-    "express": "^5.2.1",
-    "jest": "^30.4.2",
-    "pg": "^8.23.0",
-    "playwright": "^1.62.1",
+    "express": "^5.3.0",
+    "jest": "^30.5.2",
+    "pg": "^8.23.1",
+    "playwright": "^1.64.1",
     "sequelize": "^6.37.8",
-    "supertest": "^7.2.2",
-    "testcontainers": "^12.1.0"
+    "supertest": "^7.3.1",
+    "testcontainers": "^12.2.1"
   }
 }
