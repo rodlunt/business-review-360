@@ -1,0 +1,98 @@
+packages:
+  - frontend
+  - backend
+
+overrides:
+  # Existing project overrides (migrated from package.json#overrides for pnpm 11;
+  # the package.json field is no longer read since pnpm v11).
+  # 2026-08-18: hono, fast-uri and @hono/node-server were only pulled in via the
+  # root `shadcn` CLI devDependency and the vestigial `@modelcontextprotocol/
+  # server-filesystem` runtime dependency, both removed in the Dependabot
+  # backlog sweep (see PR body). No remaining consumer resolves either package,
+  # so those three overrides were dropped rather than carried forward stale.
+  ip-address: ^10.3.1
+  express-rate-limit: ^8.6.2
+  # Security patches for 3 moderate transitive CVEs (Dependabot 2026-05).
+  # Scoped to the affected major lines only so older majors of the same
+  # package (e.g. brace-expansion 1.x/2.x used by exceljs, archiver, jest
+  # internals) are left untouched.
+  brace-expansion@^5.0.0: ^5.0.9 # GHSA-jxxr-4gwj-5jf2 DoS (bypass fix, 2026-08)
+  # 2026-07-23: the 1.x/2.x majors picked up their own DoS advisory
+  # (exponential-time expansion), so the leave-older-majors-alone note
+  # above no longer holds for brace-expansion specifically.
+  brace-expansion@^1.0.0: ^1.1.17
+  brace-expansion@^2.0.0: ^2.1.3
+  ws@^8.0.0: ^8.20.1 # GHSA-58qx-3vcg-4xpx uninit memory disclosure
+  # 2026-09-02: a high advisory published against browserslist <=4.28.6
+  # (unbounded memory growth, no cache eviction on distinct query results,
+  # leading to eventual OOM). Transitive dev-only, three levels down via
+  # @jest/globals > jest-snapshot > @babel/core > @babel/helper-compilation-
+  # targets. It is dev-only, so it does not reach the deployed app, but
+  # `pnpm audit --audit-level=high` is a required check and this now fails
+  # EVERY branch including main, which blocks all merges until it is pinned.
+  browserslist@^4.0.0: ^4.28.7 # GHSA browserslist OOM (2026-09)
+  protobufjs@^7.0.0: ^7.5.8 # GHSA-jggg-4jg4-v7c6 recursive JSON DoS
+  # Security patches for the 3 transitive CVEs left after the 2026-07-05 sweep
+  # (everything else cleared by a plain `pnpm -r update`). uuid crosses majors
+  # (8.x under sequelize/exceljs/dockerode); v4() named export is stable 8->11.
+  uuid@<11.1.1: ^11.1.1 # missing buffer bounds check
+  esbuild@>=0.27.3 <0.28.1: ^0.28.1 # arbitrary file read via Windows dev server
+  "@opentelemetry/core@<2.8.0": ^2.8.0 # unbounded memory growth via W3C Baggage
+  # 2026-08-18 Dependabot backlog sweep. js-yaml, nanoid, postcss and undici
+  # are all dev-toolchain transitives (jest/istanbul, vite/postcss, jsdom,
+  # testcontainers, sqlite3's optional node-gyp build fallback); deepmerge-ts
+  # is runtime, pulled in by shepherd.js (product tour library) which has no
+  # released version past deepmerge-ts@^7.1.5, so the patch can only land as
+  # an override, not a parent bump. tar closes the last node-gyp/sqlite3 path.
+  js-yaml@^3.0.0: ^3.15.2 # CVE-2026-59870 quadratic CPU in !!omap (was ^3.15.1; superseded 2026-09-12 by GHSA-2883-xcg3-v3hh, maxTotalMergeKeys doesn't bound CPU for empty merge sources)
+  nanoid: ^3.3.18 # zero/negative size infinite loop
+  postcss: ^8.5.23 # sourceMappingURL .map disclosure (incomplete fix)
+  undici@^6.0.0: ^6.28.0 # cookie/CRLF/desync issues, sqlite3 build path
+  undici@^7.0.0: ^7.29.0 # cookie/CRLF/desync/cache-disclosure issues
+  tar: ^7.5.21 # uncontrolled recursion DoS, sqlite3 build path
+  deepmerge-ts: ^8.0.0 # stack exhaustion on recursive object graphs
+
+allowBuilds:
+  # argon2's install script is node-gyp-build's prebuild check; the package
+  # ships napi prebuilds for every target incl. linux musl (verified in
+  # prebuilds/linux-x64: glibc and musl binaries), so nothing compiles. The
+  # backend Dockerfile installs with --ignore-scripts either way. NOTE:
+  # backend/pnpm-workspace.yaml shadows this file for backend-cwd installs
+  # and needs the same entry.
+  argon2: true
+  bcrypt: true
+  cpu-features: true
+  esbuild: true
+  msw: true
+  protobufjs: true
+  sharp: true
+  sqlite3: true
+  ssh2: true
+  unrs-resolver: true
+
+minimumReleaseAgeExclude:
+  - qs@6.15.4
+  - qs@6.16.0
+  - vitest@4.1.11
+  - '@vitest/mocker@4.1.11'
+  - undici@8.10.2
+  - undici@6.28.1
+  - multer@2.4.0
+  - ip-address@10.5.1
+  - ip-address@10.7.1
+  - moment@2.31.0
+  - brace-expansion@1.1.21
+  - brace-expansion@2.1.7
+  - brace-expansion@5.0.12
+  - brace-expansion@1.1.20
+  - brace-expansion@2.1.6
+  - brace-expansion@5.0.11
+  - brace-expansion@1.1.19
+  - brace-expansion@2.1.5
+  - brace-expansion@5.0.10
+  - axios@1.20.0
+  - '@grpc/grpc-js@1.14.5'
+  - braces@3.0.4
+  - sprintf-js@1.1.4
+  - source-map-js@1.2.2
+  - proxy-addr@2.0.8

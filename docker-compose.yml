@@ -1,0 +1,115 @@
+services:
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      # Bind to loopback only - Postgres must never be reachable off-host.
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./db/00-init-databases.sh:/docker-entrypoint-initdb.d/00-init-databases.sh
+      - ./db/platform-schema.sql:/docker-entrypoint-initdb.d/03-platform-schema.sql
+      # #871: the app DB is intentionally NOT seeded from initdb scripts.
+      # db/clean_minimal_schema.sql is the FROZEN legacy schema (CLAUDE.md)
+      # and db/seed-data.sql references post-0008 columns it lacks, so on a
+      # genuinely fresh db_data volume the old initdb chain crashed and
+      # migrate.js then false-bootstrapped the ledger (the #857 divergence).
+      # The app DB now starts EMPTY and the backend's runMigrations builds
+      # the canonical schema from db/migrations/app/0001-baseline on boot
+      # (single source of truth, post-#857 direction; docker-compose.ci.yml
+      # already proves this path for the 5c e2e). br360_platform is still
+      # created by 00-init-databases.sh + platform-schema.sql (the app-DB
+      # migrations do not build the separate platform DB). NOTE: existing
+      # volumes (prod, long-lived dev) are unaffected - Postgres runs
+      # initdb scripts only on an empty data dir. To get the shared
+      # demo-corp fixture on a FRESH dev stack, apply db/seed-data.sql
+      # manually AFTER the backend has run migrations (see docs/MIGRATIONS.md).
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - appnet
+
+  backend:
+    image: business-review-360-backend:latest
+    build: ./backend
+    restart: always
+    env_file:
+      - .env
+    environment:
+      # Override specific vars if needed (optional)
+      DATABASE_URL: ${DATABASE_URL}
+      PLATFORM_DATABASE_URL: ${PLATFORM_DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
+      PORT: ${PORT:-4000}
+      NODE_ENV: ${NODE_ENV:-production}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      SENTRY_RELEASE: ${SENTRY_RELEASE:-}
+      FRONTEND_URL: ${FRONTEND_URL}
+      RECAPTCHA_SECRET_KEY: ${RECAPTCHA_SECRET_KEY}
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      EMAIL_FROM: ${EMAIL_FROM}
+      #GMAIL_USER: ${GMAIL_USER}
+      #GMAIL_PASS: ${GMAIL_PASS}
+    ports:
+      # Bind to loopback only - the backend is reached via Caddy on the web
+      # network, never directly off-host.
+      - "127.0.0.1:4000:4000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      # Only persist uploads - DO NOT mount src or package.json in production
+      # Those volume mounts override the built container with stale local files
+      - ./uploads:/app/uploads
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:4000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - appnet
+      - web
+
+  frontend:
+    image: business-review-360-frontend:latest
+    build:
+      context: .
+      dockerfile: ./frontend/Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-/api}
+        VITE_RECAPTCHA_SITE_KEY: ${VITE_RECAPTCHA_SITE_KEY}
+        VITE_BUILD_NUMBER: ${VITE_BUILD_NUMBER:-prod}
+        VITE_SENTRY_DSN: ${VITE_SENTRY_DSN:-}
+        VITE_BASE_DOMAIN: ${VITE_BASE_DOMAIN:-br360.example.com}
+    restart: always
+    expose:
+      - "3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - web
+      - appnet
+
+
+volumes:
+  db_data:
+
+networks:
+  appnet:
+    driver: bridge
+  web:
+    driver: bridge

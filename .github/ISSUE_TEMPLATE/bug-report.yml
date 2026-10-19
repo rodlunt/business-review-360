@@ -1,0 +1,40 @@
+name: Bug report
+description: Report a defect in the application
+title: "bug(scope): "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This project is retired. This form is kept for forks that continue the work.
+        Title format is `bug(scope): description`.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What did you see, and where (URL, organisation, role)?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Exact steps, in order, from a clean starting point.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Two or three testable statements. The bug is fixed when each one passes.
+      placeholder: |
+        - [ ] Doing X as role Y no longer produces Z
+        - [ ] A regression test covers it
+    validations:
+      required: true

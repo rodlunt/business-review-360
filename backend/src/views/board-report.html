@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="en-AU">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Executive Board Report</title>
+    <style>
+      :root {
+        --primary: #1565c0;
+        --text-primary: #0f172a;
+        --text-secondary: #64748b;
+        --text-light: #94a3b8;
+        --border: rgba(0,0,0,0.12);
+      }
+      /* Allow org primary colour override */
+      :root { --primary: {{org.primaryColor}}; }
+
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: white;
+        color: var(--text-primary);
+        line-height: 1.5;
+        font-size: 14px;
+      }
+
+      @media print {
+        @page { size: A4; margin: 7.5mm; }
+        body { background: white; }
+      }
+
+      .doc {
+        max-width: 960px; margin: 0 auto; padding: 20px 32px 16px;
+        background: white;
+        display: flex; flex-direction: column;
+      }
+
+      /* ---- Header ---- */
+      .doc-header {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: flex-start;
+        gap: 20px;
+        margin-bottom: 14px;
+        padding-bottom: 10px;
+        border-bottom: 3px solid var(--primary);
+      }
+
+      .org-logo { height: 44px; object-fit: contain; display: block; }
+
+      .org-avatar {
+        width: 44px; height: 44px; border-radius: 50%;
+        background: white; border: 2px solid var(--primary);
+        color: var(--primary); font-weight: 700; font-size: 1.2rem;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .doc-title { font-weight: 800; font-size: 1.25rem; letter-spacing: -0.02em; line-height: 1.15; color: #0f172a; }
+      .doc-org { font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px; font-weight: 500; }
+
+      .doc-meta { text-align: right; white-space: nowrap; }
+      .doc-meta-range { font-weight: 700; font-size: 0.82rem; color: #334155; }
+      .doc-meta-gen { font-size: 0.72rem; color: var(--text-secondary); margin-top: 4px; }
+
+      /* ---- Section heading ---- */
+      .section-heading {
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 0.72rem;
+        color: var(--text-secondary);
+        margin-bottom: 8px;
+        margin-top: 2px;
+      }
+
+      /* ---- Divider ---- */
+      .divider { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+
+      /* ---- Summary cards (6 col) ---- */
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 10px;
+        margin-bottom: 4px;
+      }
+
+      .summary-card {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 8px 6px 10px;
+        text-align: center;
+      }
+
+      .summary-icon {
+        width: 24px; height: 24px;
+        border-radius: 50%;
+        margin: 0 auto 4px;
+        flex-shrink: 0;
+      }
+
+      .summary-value { font-size: 1.4rem; font-weight: 700; line-height: 1.2; }
+      .summary-label { font-size: 0.68rem; color: var(--text-secondary); font-weight: 600; margin-top: 2px; }
+
+      .trend-chip {
+        display: inline-block;
+        font-size: 0.63rem; font-weight: 600;
+        padding: 1px 6px; border-radius: 12px; margin-top: 5px;
+      }
+      .trend-up { background: #d1fae5; color: #065f46; }
+      .trend-down { background: #fee2e2; color: #7f1d1d; }
+      .trend-flat { background: #f1f5f9; color: var(--text-secondary); }
+
+      /* ---- ROI cards (4 col) ---- */
+      .roi-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        margin-bottom: 4px;
+      }
+
+      .roi-card { border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
+      .roi-value { font-size: 1.2rem; font-weight: 700; }
+      .roi-label { font-size: 0.68rem; color: var(--text-secondary); margin-top: 2px; }
+
+      /* ---- Pipeline funnel ---- */
+      .pipeline-funnel {
+        display: flex;
+        align-items: center;
+        margin-bottom: 4px;
+      }
+
+      .pipeline-stage { flex: 1; text-align: center; }
+
+      .pipeline-box {
+        border-radius: 8px; padding: 10px;
+        font-weight: 700; font-size: 1.3rem;
+        color: white;
+      }
+
+      .pipeline-label {
+        font-size: 0.68rem; color: var(--text-secondary);
+        display: block; margin-top: 4px;
+      }
+
+      .pipeline-arrow {
+        color: #cbd5e1; font-size: 1rem;
+        padding: 0 4px; flex-shrink: 0; padding-bottom: 20px;
+      }
+
+      /* ---- Alert ---- */
+      .alert-warning {
+        background: #fffbeb; border: 1px solid #fbbf24; border-radius: 8px;
+        padding: 8px 10px; font-size: 0.78rem; color: #92400e;
+        margin-top: 8px;
+      }
+
+      /* ---- Bottom two-col ---- */
+      .bottom-grid {
+        display: grid;
+        grid-template-columns: 7fr 5fr;
+        gap: 24px;
+      }
+
+      /* ---- Idea cards ---- */
+      .idea-list { display: flex; flex-direction: column; gap: 8px; }
+
+      .idea-card {
+        border: 1px solid var(--border); border-radius: 8px;
+        padding: 9px 12px;
+        display: flex; align-items: center; gap: 12px;
+      }
+
+      .idea-num { font-weight: 700; color: #94a3b8; font-size: 0.82rem; min-width: 18px; }
+      .idea-body { flex: 1; min-width: 0; }
+      .idea-title {
+        font-weight: 600; font-size: 0.82rem; color: var(--text-primary);
+        display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+        overflow: hidden;
+      }
+      .idea-chips { display: flex; gap: 5px; margin-top: 4px; flex-wrap: wrap; }
+
+      /* ---- Chips ---- */
+      .chip {
+        display: inline-block;
+        border: 1px solid var(--border); border-radius: 12px;
+        padding: 1px 7px; font-size: 0.65rem;
+      }
+      .chip-status-reviewing { background: #fffbeb; color: #92400e; border-color: #fbbf24; }
+      .chip-status-approved  { background: #eff6ff; color: #1e3a8a; border-color: #93c5fd; }
+      .chip-status-in-progress { background: #f5f3ff; color: #3730a3; border-color: #c4b5fd; }
+      .chip-status-complete  { background: #f0fdf4; color: #065f46; border-color: #86efac; }
+      .chip-vote { font-weight: 600; color: var(--primary); border-color: var(--primary); }
+      .chip-impact { font-weight: 500; color: var(--primary); border-color: var(--primary); }
+
+      /* ---- Recommendation cards ---- */
+      .rec-list { display: flex; flex-direction: column; gap: 8px; }
+
+      .rec-card { border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
+      .rec-num { font-size: 0.63rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
+      .rec-title {
+        font-weight: 600; font-size: 0.88rem; margin-top: 4px; color: var(--text-primary);
+        display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+        overflow: hidden;
+      }
+      .rec-chips { display: flex; gap: 6px; margin-top: 8px; }
+
+      /* ---- Footer ---- */
+      .doc-footer {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-top: auto; padding-top: 10px; padding-bottom: 2px;
+        border-top: 2px solid var(--border);
+      }
+
+      .footer-wordmark { font-weight: 700; font-size: 1rem; letter-spacing: -0.02em; color: var(--text-primary); }
+      .footer-wordmark span { color: var(--primary); }
+      .footer-meta { font-size: 0.7rem; color: var(--text-secondary); }
+    </style>
+  </head>
+  <body>
+    <div class="doc">
+      <!-- Header -->
+      <div class="doc-header">
+        <div>
+          {{#if org.logoUrl}}
+          <img src="{{org.logoUrl}}" alt="{{org.name}}" class="org-logo" />
+          {{/if}}
+        </div>
+        <div>
+          <div class="doc-title">Executive Board Report</div>
+          <div class="doc-org">{{org.name}}</div>
+        </div>
+        <div class="doc-meta">
+          <div class="doc-meta-range">{{periodLabel}}: {{dateRange}}</div>
+          <div class="doc-meta-gen">Generated {{generatedAt}}</div>
+        </div>
+      </div>
+
+      <!-- Executive Summary -->
+      <div class="section-heading">Executive Summary</div>
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="summary-icon" style="background: #3b82f6"></div>
+          <div class="summary-value">{{totalIdeas.current}}</div>
+          <div class="summary-label">Ideas submitted</div>
+          {{#if totalIdeas.pct}}<span class="trend-chip trend-{{trendClass totalIdeas}}"
+            >{{trendText totalIdeas}}</span
+          >{{/if}}
+        </div>
+        <div class="summary-card">
+          <div class="summary-icon" style="background: #10b981"></div>
+          <div class="summary-value">{{implemented.current}}</div>
+          <div class="summary-label">Implemented</div>
+          {{#if implemented.pct}}<span class="trend-chip trend-{{trendClass implemented}}"
+            >{{trendText implemented}}</span
+          >{{/if}}
+        </div>
+        <div class="summary-card">
+          <div class="summary-icon" style="background: #8b5cf6"></div>
+          <div class="summary-value">{{activeUsers.current}}</div>
+          <div class="summary-label">Active users</div>
+          {{#if activeUsers.pct}}<span class="trend-chip trend-{{trendClass activeUsers}}"
+            >{{trendText activeUsers}}</span
+          >{{/if}}
+        </div>
+        <div class="summary-card">
+          <div class="summary-icon" style="background: #f59e0b"></div>
+          <div class="summary-value">{{participationRate}}%</div>
+          <div class="summary-label">Participation</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-icon" style="background: #10b981"></div>
+          <div class="summary-value">{{annualCostSavings}}</div>
+          <div class="summary-label">Annual savings</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-icon" style="background: #64748b"></div>
+          <div class="summary-value">{{avgTimeToImplementation}}d</div>
+          <div class="summary-label">Avg days to impl.</div>
+        </div>
+      </div>
+
+      <hr class="divider" />
+
+      <!-- ROI Impact -->
+      <div class="section-heading">ROI Impact</div>
+      <div class="roi-grid">
+        <div class="roi-card">
+          <div class="roi-value">{{annualTimeSavedHours}} hrs</div>
+          <div class="roi-label">Time saved (annual)</div>
+        </div>
+        <div class="roi-card">
+          <div class="roi-value">{{annualCostSavings}}</div>
+          <div class="roi-label">Cost savings (annual)</div>
+        </div>
+        <div class="roi-card">
+          <div class="roi-value">{{ideasImplemented}}</div>
+          <div class="roi-label">Ideas implemented (all time)</div>
+        </div>
+        <div class="roi-card">
+          <div class="roi-value">{{costPerIdea}}</div>
+          <div class="roi-label">Avg cost savings per idea</div>
+        </div>
+      </div>
+
+      <hr class="divider" />
+
+      <!-- Pipeline Status -->
+      <div class="section-heading">Pipeline Status</div>
+      <div class="pipeline-funnel">
+        <div class="pipeline-stage">
+          <div class="pipeline-box" style="background: #f59e0b">{{pipeline.reviewing}}</div>
+          <span class="pipeline-label">Reviewing</span>
+        </div>
+        <div class="pipeline-arrow">&#8594;</div>
+        <div class="pipeline-stage">
+          <div class="pipeline-box" style="background: #3b82f6">{{pipeline.approved}}</div>
+          <span class="pipeline-label">Approved</span>
+        </div>
+        <div class="pipeline-arrow">&#8594;</div>
+        <div class="pipeline-stage">
+          <div class="pipeline-box" style="background: #8b5cf6">{{pipeline.inProgress}}</div>
+          <span class="pipeline-label">In Progress</span>
+        </div>
+        <div class="pipeline-arrow">&#8594;</div>
+        <div class="pipeline-stage">
+          <div class="pipeline-box" style="background: #10b981">{{pipeline.implemented}}</div>
+          <span class="pipeline-label">Implemented</span>
+        </div>
+      </div>
+      {{#if stuckCount}}
+      <div class="alert-warning">
+        &#9888; <strong>{{stuckCount}} ideas stuck in Reviewing</strong> for more than 14 days.
+        Consider prioritising these or removing blockers.
+      </div>
+      {{/if}}
+
+      <hr class="divider" />
+
+      <!-- Bottom: Top Ideas | Recommendations -->
+      <div class="bottom-grid">
+        <div>
+          <div class="section-heading">Top Ideas for Consideration</div>
+          <div class="idea-list">
+            {{#each topIdeas}}
+            <div class="idea-card">
+              <div class="idea-num">{{this.rank}}.</div>
+              <div class="idea-body">
+                <div class="idea-title">{{this.title}}</div>
+                <div class="idea-chips">
+                  {{#if this.category}}<span class="chip">{{this.category}}</span>{{/if}}
+                  <span class="chip chip-status-{{statusClass this.status}}">{{this.status}}</span>
+                </div>
+              </div>
+              <div><span class="chip chip-vote">&#9733; {{this.voteCount}} votes</span></div>
+            </div>
+            {{/each}}
+          </div>
+        </div>
+
+        <div>
+          <div class="section-heading">Next Quarter Recommendations</div>
+          <div class="rec-list">
+            {{#each recommendations}}
+            <div class="rec-card">
+              <div class="rec-num">#{{this.rank}} Recommendation</div>
+              <div class="rec-title">{{this.title}}</div>
+              <div class="rec-chips">
+                <span class="chip">{{this.voteCount}} votes</span>
+                {{#if this.impactScore}}<span class="chip chip-impact"
+                  >Impact: {{this.impactScore}}/10</span
+                >{{/if}}
+              </div>
+            </div>
+            {{/each}}
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="doc-footer">
+        <div class="footer-wordmark">Business Review <span>360</span></div>
+        <div class="footer-meta">br360.example.com &nbsp;&bull;&nbsp; Confidential</div>
+      </div>
+    </div>
+  </body>
+</html>

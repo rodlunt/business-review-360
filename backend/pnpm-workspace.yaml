@@ -1,0 +1,8 @@
+allowBuilds:
+  # argon2: node-gyp-build prebuild check only; napi prebuilds cover every
+  # target incl. linux musl, nothing compiles.
+  argon2: true
+  bcrypt: true
+  esbuild: true
+  sqlite3: true
+  unrs-resolver: true

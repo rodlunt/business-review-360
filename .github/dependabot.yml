@@ -1,0 +1,26 @@
+version: 2
+updates:
+  # Keeps the commit-SHA pins on third-party actions (ci.yml, e2e.yml,
+  # e2e-full.yml) current
+  # without hand-checking tags for new releases.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+
+  # pnpm workspace (root + backend + frontend), one lockfile at the repo
+  # root. Dependabot's ecosystem value is "npm" even for a pnpm-lock.yaml
+  # project; it reads the lockfile format, not the CLI name. Minor and
+  # patch bumps are grouped into one weekly PR so ci.yml's split jobs
+  # (lint, test-backend, test-backend-integration, test-frontend, audit) aren't
+  # buried under a flood of single-package PRs. Majors stay ungrouped so
+  # a breaking change gets its own review.
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
