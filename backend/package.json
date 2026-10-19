@@ -55,7 +55,7 @@
     "react-dom": "^19.2.8",
     "resend": "^6.20.0",
     "sequelize": "^6.37.8",
-    "stripe": "^22.5.0",
+    "stripe": "^23.0.0",
     "validator": "^13.15.35"
   },
   "devDependencies": {
