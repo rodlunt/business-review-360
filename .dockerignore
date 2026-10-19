@@ -1,0 +1,79 @@
+# Git and local editor metadata
+.git
+.gitignore
+.idea
+.vscode
+.obsidian
+
+# Dependencies and package-manager stores
+node_modules
+**/node_modules
+.pnpm-store
+.npm
+
+# Environment and credentials
+.env
+.env.*
+!.env.example
+!**/.env.example
+*.pem
+*.p12
+*.pfx
+*.key
+*_rsa
+*_rsa.pub
+*.crt
+*.csr
+credentials.json
+service-account.json
+backend/.test-reset-token
+
+# Test source and generated test artifacts
+testing
+test-results
+playwright-report
+.playwright
+.playwright-mcp
+.playwright-artifacts-*
+coverage
+.nyc_output
+
+# Build and cache outputs
+build
+dist
+out
+.next
+.nuxt
+.cache
+temp
+frontend/build
+content/site/public
+content/site/resources/_gen
+content/site/.hugo_build.lock
+
+# Runtime data and logs
+logs
+*.log
+pids
+*.pid
+*.seed
+*.pid.lock
+uploads
+backend/uploads
+content/var
+
+# Local databases and dumps
+*.sqlite
+*.sqlite3
+*.db
+*.sql.backup
+*.dump
+*.backup
+
+# OS and temporary files
+.DS_Store
+Thumbs.db
+*.tmp
+*.bak
+*.swp
+*~

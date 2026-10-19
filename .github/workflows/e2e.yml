@@ -1,0 +1,203 @@
+name: E2E (Playwright)
+
+# Phase 5 5c (#867): stands up the full Docker stack on a clean
+# GitHub-hosted runner and runs the org-less ("bare domain") login e2e
+# spec. Kept as its own workflow (not in ci.yml) because a Docker-stack +
+# Postgres + Playwright job is a different cost/runtime/flake class than
+# the lightweight Node jobs in ci.yml.
+#
+# Runs on a GitHub-hosted runner. The job brings up the docker-compose stack and
+# tears it down with `down -v`, so the volumes are disposable.
+
+on:
+  # Deliberately unfiltered: every pull request is checked, whatever it targets.
+  # With `branches: [main]` here, a PR stacked on another branch ran no checks
+  # at all, and GitHub still reported it mergeable with mergeStateStatus CLEAN
+  # and an empty statusCheckRollup. Not a missing check that looks missing, a
+  # missing check that looks like a pass. The push trigger stays main-only:
+  # this only needs to widen for pull requests.
+  pull_request:
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    name: Phase 5 5c org-less login e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+        with:
+          version: 11.1.2
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install workspace
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browser (chromium)
+        # Step-level cap: this download hung for a full 30-minute job
+        # timeout once (2026-08-19, billed hosted minutes for zero work).
+        # A healthy install takes under 2 minutes; kill a wedged one fast.
+        timeout-minutes: 5
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Write CI .env for the Docker stack
+        run: |
+          cat > .env <<'EOF'
+          POSTGRES_USER=business_review_user
+          POSTGRES_PASSWORD=ci_postgres_password
+          POSTGRES_DB=business_review_db
+          DATABASE_URL=postgresql://business_review_user:ci_postgres_password@db:5432/business_review_db
+          PLATFORM_DATABASE_URL=postgresql://business_review_user:ci_postgres_password@db:5432/br360_platform
+          JWT_SECRET=ci_jwt_secret_phase5_5c_e2e_only
+          JWT_EXPIRATION=24h
+          PORT=4000
+          NODE_ENV=production
+          FRONTEND_URL=http://localhost:3000
+          RECAPTCHA_SECRET_KEY=ci-recaptcha-secret-unused
+          # backend/src/index.js and routes/billing.js construct
+          # `new Stripe(process.env.STRIPE_SECRET_KEY)` at MODULE LOAD;
+          # Stripe v22's constructor throws "Neither apiKey nor
+          # config.authenticator provided" on a missing key, crashing the
+          # backend on boot. A dummy non-empty key satisfies the
+          # constructor with no Stripe API contact (the 5c personas are
+          # auth-only and never hit billing). Locally this is masked
+          # because the backend's `env_file: .env` also loads the dev
+          # .env which carries a test-mode key.
+          STRIPE_SECRET_KEY=sk_test_ci_dummy_unused
+          VITE_API_URL=/api
+          VITE_RECAPTCHA_SITE_KEY=
+          VITE_BUILD_NUMBER=ci-${{ github.sha }}
+          # The spec drives /auth/login for 6 personas + the negative case
+          # serially from one runner IP. Disable the IP/email rate limiters
+          # and the #859 login throttle (it honours this flag) so the suite
+          # is hermetic, matching the .env.test convention. APP_DB_ROLE is
+          # deliberately unset: wrapTenantTransaction then skips the RLS
+          # role switch (standard local/e2e posture), and the org-less
+          # /auth/login cross-tenant lookup works as it does in prod.
+          DISABLE_RATE_LIMIT=true
+          # Issue #878: e2e test-mode bypass for the reCAPTCHA verifier.
+          # The persona 5 demo-access land cannot run otherwise (the suite
+          # network-blocks `**/recaptcha/**` so the browser never gets a
+          # real Google v3 token). Backend `verifyRecaptcha` returns a
+          # synthetic success ONLY when the incoming token equals this
+          # exact value AND the env var is set; emits logger.warn on every
+          # firing. PRODUCTION SAFETY: never set this variable in a real deployment, since it
+          # weakens bot protection.
+          RECAPTCHA_E2E_BYPASS_TOKEN=e2e-test-recaptcha-token-do-not-use-in-prod
+          EOF
+
+      - name: Create the external `web` network
+        run: docker network create web
+
+      - name: Stage the backend build context
+        # The backend Dockerfile COPYs db-migrations and needs the root
+        # pnpm-lock.yaml, but its build context is ./backend. deploy.sh
+        # stages both before a prod build; mirror that exactly so the
+        # compose backend image builds the same way it does in prod.
+        run: |
+          rm -rf ./backend/db-migrations
+          cp -r ./db/migrations/app ./backend/db-migrations
+          cp pnpm-lock.yaml ./backend/
+
+      - name: Build and start the stack
+        # Pin the compose project name to business-review-360 so containers
+        # are named business-review-360-{db,backend,frontend}-1. global-setup.js
+        # and the 5c spec hard-code those names for docker exec seeding; a
+        # different project name silently breaks all fixture seeding.
+        #
+        # docker-compose.ci.yml drops the clean_minimal_schema + seed-data
+        # init mounts, so the app DB starts EMPTY: the db comes up clean
+        # (no fresh-volume init crash), the backend's runMigrations builds
+        # the canonical schema on boot, and global-setup.js seeds the
+        # fixtures afterwards. A single `up -d` is therefore sufficient;
+        # the readiness gate below absorbs the migration time on boot.
+        run: |
+          docker compose -p business-review-360 \
+            -f docker-compose.yml -f docker-compose.ci.yml \
+            up -d
+
+      - name: Wait for the stack to be ready
+        run: |
+          echo "Waiting for backend health (runMigrations runs on boot)..."
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:4000/health >/dev/null 2>&1; then
+              echo "backend healthy"
+              break
+            fi
+            if [ "$i" -eq 60 ]; then
+              echo "backend did not become healthy in time"
+              docker compose -p business-review-360 logs --no-color backend
+              exit 1
+            fi
+            sleep 5
+          done
+          echo "Waiting for frontend on :3000..."
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:3000 >/dev/null 2>&1; then
+              echo "frontend reachable"
+              break
+            fi
+            if [ "$i" -eq 30 ]; then
+              echo "frontend did not become reachable in time"
+              docker compose -p business-review-360 logs --no-color frontend
+              exit 1
+            fi
+            sleep 5
+          done
+
+      - name: Run the Phase 5 5c e2e spec
+        # Only the 5c spec: #867's done-state is this spec green in CI.
+        # Running the whole 22-file suite in CI is a separate initiative
+        # (different flake/runtime budget, much of it written for the
+        # org-scoped/subdomain world).
+        env:
+          POSTGRES_USER: business_review_user
+        run: |
+          pnpm exec playwright test \
+            --config=testing/playwright.config.js \
+            testing/e2e/21-phase5c-orgless-login.spec.js
+
+      - name: Upload Playwright report and traces
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: playwright-report
+          path: |
+            testing/playwright-report
+            testing/test-results
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Dump stack logs
+        if: failure()
+        run: docker compose -p business-review-360 logs --no-color > docker-compose-logs.txt 2>&1
+
+      - name: Upload stack logs
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: docker-compose-logs
+          path: docker-compose-logs.txt
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Tear down the stack
+        if: always()
+        run: |
+          docker compose -p business-review-360 \
+            -f docker-compose.yml -f docker-compose.ci.yml \
+            down -v || true
+          rm -rf ./backend/db-migrations ./backend/pnpm-lock.yaml

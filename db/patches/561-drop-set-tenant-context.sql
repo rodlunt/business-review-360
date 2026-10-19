@@ -1,0 +1,29 @@
+-- Issue #561: drop the session-level set_tenant_context() helper.
+--
+-- The function was the original mechanism for setting `app.tenant_id`
+-- for RLS, called by tenantResolver.js outside any transaction. It used
+-- set_config(..., false) which is session-level by design and was the
+-- cross-tenant leak vector documented in #480.
+--
+-- After PR #742 (#561 Phase 1-4), every /api request runs inside
+-- wrapTenantTransaction with `SET LOCAL app.tenant_id = :tid`, and cron
+-- paths run as the privileged role (SUPERUSER + BYPASSRLS) so RLS does
+-- not gate them. The session-level helper has no remaining callers.
+--
+-- Idempotent: DROP FUNCTION IF EXISTS is safe to re-run.
+--
+-- Order of operations (per CLAUDE.md operational gotcha #8):
+--   1. Apply this patch on the server BEFORE the auto-deploy completes:
+--        ssh your-server 'docker exec -i business-review-360-db-1 \
+--          psql -U business_review_user_0001 -d business_review_db' \
+--          < db/patches/561-drop-set-tenant-context.sql
+--   2. Verify: SELECT proname FROM pg_proc WHERE proname = 'set_tenant_context';
+--      Must return zero rows.
+--   3. Merge the PR. The deploy will pull this branch which has the
+--      tenantResolver.js cleanup that stops calling the function.
+--
+-- Rollback: re-create the function (the bare definition is in git history
+-- at db/clean_minimal_schema.sql before this PR). No data migration; the
+-- function had no state.
+
+DROP FUNCTION IF EXISTS set_tenant_context(UUID);

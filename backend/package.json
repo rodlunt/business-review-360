@@ -1,0 +1,108 @@
+{
+  "name": "business-review-backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "packageManager": "pnpm@11.1.2",
+  "engines": {
+    "node": ">=22"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "bcrypt",
+      "esbuild",
+      "sqlite3",
+      "unrs-resolver"
+    ]
+  },
+  "scripts": {
+    "start": "node --import esbuild-esm-loader/register src/index.js",
+    "dev": "nodemon --exec 'node --import esbuild-esm-loader/register' src/index.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
+    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
+    "email:preview": "node src/emails/preview.js",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "format": "prettier --write src",
+    "format:check": "prettier --check src"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.117.1",
+    "@react-email/components": "^1.0.12",
+    "@react-email/render": "^2.1.0",
+    "@sentry/node": "^10.70.0",
+    "argon2": "^0.45.1",
+    "bad-words": "^4.1.5",
+    "bcrypt": "6.0.0",
+    "cls-hooked": "^4.2.2",
+    "cors": "2.8.6",
+    "csv-parser": "^3.2.1",
+    "csv-stringify": "6.8.3",
+    "dotenv": "17.4.2",
+    "exceljs": "4.4.0",
+    "express": "5.2.1",
+    "express-rate-limit": "^8.6.2",
+    "express-validator": "^7.3.2",
+    "file-type": "^22.0.2",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "9.0.3",
+    "multer": "^2.3.0",
+    "node-cron": "^4.6.0",
+    "pg": "8.23.0",
+    "playwright-core": "^1.62.1",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "resend": "^6.20.0",
+    "sequelize": "^6.37.8",
+    "stripe": "^22.5.0",
+    "validator": "^13.15.35"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@jest/globals": "^30.4.1",
+    "esbuild": "^0.28.2",
+    "esbuild-esm-loader": "^0.3.3",
+    "eslint": "^10.8.1",
+    "eslint-plugin-react": "^7.37.5",
+    "globals": "^17.11.0",
+    "jest": "^30.4.2",
+    "nodemon": "^3.1.14",
+    "prettier": "^3.9.6",
+    "sqlite3": "^6.0.1",
+    "supertest": "^7.2.2"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "setupFiles": [
+      "<rootDir>/jest.setup.js"
+    ],
+    "globals": {
+      "jest": true
+    },
+    "transform": {},
+    "moduleNameMapper": {
+      "\\.jsx$": "<rootDir>/node_modules/react/jsx-runtime.js"
+    },
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "!src/index.js"
+    ],
+    "coverageDirectory": "coverage",
+    "roots": [
+      "<rootDir>",
+      "<rootDir>/../testing/backend-tests"
+    ],
+    "testMatch": [
+      "**/tests/**/*.test.js",
+      "**/*.test.js"
+    ],
+    "moduleDirectories": [
+      "node_modules",
+      "<rootDir>/node_modules"
+    ],
+    "modulePaths": [
+      "<rootDir>"
+    ]
+  }
+}

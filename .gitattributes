@@ -1,0 +1,51 @@
+# Set default line ending behavior for all files
+* text=auto
+
+# Ensure these file types always use LF line endings
+*.js text eol=lf
+*.jsx text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.css text eol=lf
+*.scss text eol=lf
+*.html text eol=lf
+*.xml text eol=lf
+*.svg text eol=lf
+*.sh text eol=lf
+*.sql text eol=lf
+
+# Dockerfile and related files
+Dockerfile text eol=lf
+*.dockerfile text eol=lf
+docker-compose*.yml text eol=lf
+
+# Configuration files
+.env* text eol=lf
+.gitignore text eol=lf
+.gitattributes text eol=lf
+*.config.js text eol=lf
+*.config.mjs text eol=lf
+package.json text eol=lf
+package-lock.json text eol=lf
+*.lock text eol=lf
+
+# Binary files (no text processing)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.zip binary
+*.pdf binary
+
+# Windows-specific files should use CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf

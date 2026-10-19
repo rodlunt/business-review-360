@@ -1,0 +1,38 @@
+# CI-only compose override for the Phase 5 5c Playwright e2e job (#867).
+#
+# Applied ONLY by .github/workflows/e2e.yml (and local repro) via
+#   docker compose -f docker-compose.yml -f docker-compose.ci.yml ...
+# It never affects the production stack.
+#
+# Two overrides:
+#
+# 1. frontend ports: production only `expose`s 3000 (reached via Caddy on
+#    the external `web` network). Playwright's baseURL is
+#    http://localhost:3000, so the port must be published to the host.
+#
+# 2. db volumes (!override, replaces the base list): the production stack
+#    seeds a fresh volume from db/clean_minimal_schema.sql (the FROZEN
+#    legacy schema, see CLAUDE.md) then db/seed-data.sql. On a genuinely
+#    fresh volume that chain is broken repo-wide: seed-data.sql references
+#    columns added by later migrations and absent from the legacy schema
+#    (isSuperuser, setupWizardCompleted, UserOrganizationMemberships), and
+#    the backend's runMigrations CANNOT repair it because migrate.js sees
+#    schema_migrations empty + Organizations already present (created by
+#    clean_minimal_schema) and bootstraps all migrations as "applied"
+#    without running them (the #857 trap). The DB stays frozen at the
+#    legacy schema forever. Fix for the e2e DB: drop the clean_minimal
+#    + seed-data init mounts so the APP DB starts EMPTY; migrate.js then
+#    runs 0001-baseline..NNNN and builds the canonical schema, and
+#    global-setup.js re-applies seed-data.sql + the fixtures cleanly
+#    afterwards. The 00-init-databases.sh + platform-schema.sql mounts are
+#    KEPT: they create the separate br360_platform DB (tenantResolver
+#    needs it) and are not built by the app-DB migrations.
+services:
+  db:
+    volumes: !override
+      - db_data:/var/lib/postgresql/data
+      - ./db/00-init-databases.sh:/docker-entrypoint-initdb.d/00-init-databases.sh
+      - ./db/platform-schema.sql:/docker-entrypoint-initdb.d/03-platform-schema.sql
+  frontend:
+    ports:
+      - "3000:3000"

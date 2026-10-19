@@ -1,0 +1,50 @@
+-- =========================================
+-- Patch 583: UNIQUE constraint on sales_enquiries (email, day)
+-- =========================================
+-- Issue: https://github.com/rodlunt/business-review-360/issues/583
+-- Follow-up to: #574 (sales_enquiries table created without UNIQUE).
+--
+-- BR360 has no schema migration tooling yet (tracked under #584). Until that
+-- lands, schema patches live here as one-off idempotent SQL files. To apply
+-- this patch on prod:
+--
+--     docker exec -i br360-db psql -U postgres -d br360_platform \
+--         < db/patches/583-sales-enquiries-unique-day.sql
+--
+-- This patch is idempotent: re-running it is a no-op once the index exists.
+-- It does NOT replace clean_minimal_schema.sql / platform-schema.sql; the
+-- equivalent index has been added to platform-schema.sql so fresh builds get
+-- it via the normal db init script.
+--
+-- Why a unique index, not a constraint: PostgreSQL does not support functional
+-- expressions in ADD CONSTRAINT UNIQUE. A UNIQUE INDEX on
+-- (email, ((created_at AT TIME ZONE 'Australia/Brisbane')::date)) is the
+-- supported equivalent and the ORM treats violations as
+-- SequelizeUniqueConstraintError the same way.
+--
+-- Why the AT TIME ZONE cast: date_trunc('day', timestamptz) is STABLE not
+-- IMMUTABLE in Postgres (depends on session timezone), so it cannot live in
+-- an index expression and Postgres rejects it with 42P17. Casting via
+-- AT TIME ZONE '<literal>' to a plain timestamp before extracting the date
+-- makes the expression IMMUTABLE. 'Australia/Brisbane' matches BR360's
+-- operational timezone so collisions land on the calendar day a Brisbane
+-- user would call "today".
+--
+-- Why CONCURRENTLY: avoids an ACCESS EXCLUSIVE lock on a table that backs
+-- the live marketing-site sales-enquiry form. CONCURRENTLY cannot run inside
+-- a transaction block, so this file must be applied as a single top-level
+-- statement (psql -f or piped, not wrapped in BEGIN/COMMIT).
+--
+-- Pre-flight: surface duplicates first so the index build does not abort
+-- against existing rows. Run this query and clean up dupes before applying
+-- if it returns any rows:
+--
+--     SELECT email,
+--            (created_at AT TIME ZONE 'Australia/Brisbane')::date AS day,
+--            COUNT(*)
+--     FROM sales_enquiries
+--     GROUP BY email, (created_at AT TIME ZONE 'Australia/Brisbane')::date
+--     HAVING COUNT(*) > 1;
+
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS uniq_sales_enquiries_email_day
+    ON sales_enquiries (email, (((created_at AT TIME ZONE 'Australia/Brisbane')::date)));

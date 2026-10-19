@@ -1,0 +1,34 @@
+name: Feature request
+description: Propose a change or addition
+title: "feat(scope): "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This project is retired. This form is kept for forks that continue the work.
+        Title format is `feat(scope): description`. Epics should be split into issues
+        of about a person-week before work starts.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What can a user not do today, and who is affected?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Two or three testable statements. The feature is done when each one passes.
+      placeholder: |
+        - [ ] A user with role X can do Y
+        - [ ] Tests cover the new behaviour
+    validations:
+      required: true

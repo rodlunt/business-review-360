@@ -1,0 +1,35 @@
+-- =====================================================
+-- Patch: 731-drop-redundant-username-index.sql
+-- Issue: https://github.com/rodlunt/business-review-360/issues/731
+--
+-- WHAT
+--   Drops the redundant non-unique btree index "idx_users_username" on
+--   "Users"(username). The "Users_username_key" UNIQUE btree (auto-created
+--   from the inline UNIQUE column constraint in clean_minimal_schema.sql)
+--   already covers every equality-lookup access pattern that
+--   "idx_users_username" served, so the second index only adds write
+--   amplification on every INSERT/UPDATE.
+--
+-- WHY
+--   Surfaced during the #725 review pass and verified live on prod after
+--   that PR deployed: pg_indexes returned both indexes side-by-side. Not
+--   introduced by any recent PR; the duplicate has lived in the schema
+--   since well before the current focus window.
+--
+-- HOW TO APPLY (production)
+--   docker exec -i business-review-360-db-1 psql \
+--     -U business_review_user_0001 -d business_review_db \
+--     < db/patches/731-drop-redundant-username-index.sql
+--
+-- IDEMPOTENCY
+--   DROP INDEX IF EXISTS is a Postgres no-op when the index is gone.
+--
+-- POST-APPLY AUDIT
+--   Confirm only one index remains on Users.username, and it's UNIQUE:
+--     SELECT indexname, indexdef
+--     FROM pg_indexes
+--     WHERE tablename = 'Users' AND indexdef LIKE '%username%';
+--   Expected: exactly one row, "Users_username_key", with UNIQUE in the def.
+-- =====================================================
+
+DROP INDEX IF EXISTS idx_users_username;

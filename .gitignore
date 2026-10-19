@@ -1,0 +1,376 @@
+# Ignore solved issues documentation
+solved Issues.md
+
+# Local script outputs (issue-graph, ad-hoc reports)
+/outputs/
+
+# Environment variables (but keep example files)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.development
+.env.staging
+.env.production
+.env.test
+.env.bak*
+.env.backup
+!.env.example
+!**/.env.example
+!.env.backup.example
+# Issue #593: backend/.env.test is committed with dummy values so every dev
+# and CI worker gets identical test env. The contents are checked into git
+# and must NEVER hold real secrets.
+!backend/.env.test
+
+# Runtime artefact written by deploy/deploy.sh on the server (per-run docker config)
+deploy/.docker-config/
+
+# Migration files staged by deploy.sh into the backend build context temporarily
+backend/db-migrations/
+
+# Security and credentials
+*.pem
+*.p12
+*.pfx
+*.key
+*_rsa
+*_rsa.pub
+*.crt
+*.csr
+credentials.json
+service-account.json
+
+# Issue #544 - per-boot bearer token for test-only reset-database endpoint
+backend/.test-reset-token
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+yarn.lock
+.pnp.*
+.npm
+
+# Python (content-engine venv + dev tooling, #654)
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Build directories
+/build
+/dist
+/out
+/.next
+/.nuxt
+/.cache
+/temp
+
+# Hugo build artefacts (BR360 blog scaffold, #649)
+content/site/public/
+content/site/resources/_gen/
+content/site/.hugo_build.lock
+
+# Content-engine runtime state (social crosspost tracking, caches)
+content/var/
+# Engine-generated quality reports (ephemeral; editorial action tracked in briefs)
+content/vault/30_Output/originality/
+# Dashboard runtime cache (per-tenant GSC/GA4 refresh state; regenerated each run)
+content/.dashboard/
+# Orchestrator/runtime state (content-engine #262): failures, analytics cache,
+# stale-ready dedup, audits, orchestrator.json
+content/.state/
+
+# Logs
+logs
+*.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Testing
+/coverage
+/.nyc_output
+
+# Obsidian vault config (local to each machine)
+.obsidian/
+
+# IDE and editor files
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+ 
+# MCP server and config files
+mcp.json
+mcp-*
+mcp/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Application specific
+/uploads/*
+!/uploads/.gitkeep
+/backend/uploads/*
+!/backend/uploads/.gitkeep
+/frontend/build/*
+!/frontend/build/.gitkeep
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+*.sql.backup
+*.dump
+*.backup
+
+# Docker secrets
+.docker/
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~.nib
+
+# Test artifacts and temporary test files
+test-results/
+.playwright-artifacts-*/
+/test-*.js
+current-page.png
+logged-in-state.png
+
+# Playwright
+playwright-report/
+test-results/
+/testing/test-results/
+.playwright/
+.playwright-mcp/
+
+# Unlighthouse and Puppeteer
+.unlighthouse/
+.puppeteer_data/
+lighthouse-results/
+testing/unlighthouse/
+
+# Ignore entire testing directory (lowercase) - COMMENTED OUT to allow test commits
+# /testing/
+# !/testing/.gitkeep
+
+# Temporary testing and analysis files
+*-ANALYSIS.md
+*-ACTION-PLAN.md
+all-open-issues.json
+temp-*.json
+*-test*.json
+register-*.json
+create-*.json
+NewIssue.md
+
+# GitHub issue management scripts (temporary)
+*-issue-*.cjs
+check-issue*.cjs
+close-issue*.cjs
+create-*-issue.cjs
+create-project*.cjs
+find-*.cjs
+get-issue*.cjs
+label-issues.cjs
+review-*-issues.cjs
+search-*-issue.cjs
+update-issue*.cjs
+add-to-project.cjs
+list-projects.cjs
+close-completed-issues.cjs
+close-epic*.cjs
+
+# Test output files
+testing/test-results.txt
+testing/all-tests-results.txt
+
+# Temporary database seed files
+db/seed-test-users.sql
+
+# Authentication testing files (contain credentials/tokens)
+login.json
+login-response.json
+*login*.json
+*auth*.json
+*token*.json
+
+# Screenshots and images (except documentation)
+*.png
+*.jpg
+*.jpeg
+*.gif
+!docs/**/*.png
+!docs/**/*.jpg
+!docs/**/*.jpeg
+!README*.png
+!frontend/public/**/*.png
+!frontend/public/**/*.jpg
+!frontend/public/**/*.jpeg
+!frontend/public/**/*.gif
+!frontend/public/**/*.ico
+!frontend/public/**/*.svg
+!website/**/*.png
+!website/**/*.jpg
+!website/**/*.jpeg
+!website/**/*.gif
+!website/**/*.webp
+!website/**/*.ico
+!content/site/static/**/*.png
+!content/site/static/**/*.jpg
+!content/site/static/**/*.jpeg
+!content/site/static/**/*.gif
+!content/site/static/**/*.webp
+
+# Windows script files (temporary testing scripts)
+*.cmd
+*.bat
+*.ps1
+!deploy/deploy.ps1
+!deploy/full-rebuild.ps1
+!deploy/reset-db.ps1
+!scripts/Send-MagicPacket.ps1
+
+# Package managers alternative files
+bun.lockb
+# Root pnpm-lock.yaml is intentionally NOT ignored: pnpm is the canonical
+# package manager and the root lockfile is the single source of truth.
+# Per-package lockfiles ARE ignored: backend/ and frontend/ each carry a
+# tracked stripped pnpm-workspace.yaml for the Docker build (#846), which
+# makes any pnpm command run from those dirs treat them as a separate
+# workspace root and emit a stray local lockfile. These must never be
+# committed; they would shadow the root lockfile.
+backend/pnpm-lock.yaml
+frontend/pnpm-lock.yaml
+
+# Additional IDE files
+*.code-workspace
+
+# Ignore all dev-tool scripts
+dev-tool*
+# Ignore all dev-tool scripts in any dev-tools folder
+dev-tools/dev-tool*
+
+# Development files and temporary dev scripts
+# Patterns are separator-bounded to avoid catching legitimate source files
+# (e.g. DeveloperSettings.jsx, dev-server config, etc.)
+*-dev.*
+*_dev.*
+dev-*
+dev_*
+*.dev.*
+*-development.*
+*_development.*
+
+# VSCode AI rules
+.github\instructions\codacy.instructions.md
+
+
+# Production deployment files
+.vercel
+.netlify
+.railway
+.heroku
+
+# Docker development overrides
+docker-compose.override.yml
+.dockerignore.local
+
+# Local development database files
+*.sqlite-journal
+postgres-data/
+
+# Environment-specific configs
+config/local.json
+config/development.json
+config/production.local.json
+
+# Backup files from editors
+*~
+*.orig
+*.rej
+
+# Local SSL certificates for development
+*.pem.local
+localhost.key
+localhost.crt
+
+# IDE workspace files
+*.code-workspace
+
+# Testing coverage reports
+coverage/
+*.coverage
+.nyc_output/
+
+# Dependency directories from sub-projects
+**/node_modules/
+**/dist/
+**/build/
+
+# Local development scripts and tools
+scripts/local/
+tools/local/
+local-*
+*.local.*
+
+# Database backups
+backups/
+
+# Archive directory (temporary/completed documentation)
+docs/archive/
+
+# Production environment files (contains secrets)
+PRODUCTION-ENV-READY.txt
+.env.production.CLEAN
+.env.production.TEMPLATE
+
+# Temporary helper scripts
+fix-*.cjs
+
+# Marketing drafts — local only
+Marketing/
+nul
+
+# Test data
+testing/test-webhook-event.json
+
+# Audit artefacts (raw screenshots + Lighthouse reports). Curated keepers live in docs/.
+audit-2026-04-25/
+.pnpm-store/
+
+# Engineering-audit run artefacts (generated; report.html + run-state)
+audit-output/
+
+# scripts/marketing-screenshots/capture.js output (#978). Nothing in the
+# repo consumes these automatically yet; copy what you need by hand into
+# content/site/static/ or docs/images/.
+scripts/marketing-screenshots/output/

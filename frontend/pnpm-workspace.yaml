@@ -1,0 +1,12 @@
+# Frontend-specific pnpm-workspace.yaml for the Docker build only.
+#
+# The frontend image builds from the monorepo-root context but installs just
+# the frontend package. A stripped workspace file (no `packages:` list) makes
+# pnpm treat the image's WORKDIR as a single-package workspace root, so the
+# monorepo-root lockfile resolves against frontend/package.json alone. This
+# mirrors backend/pnpm-workspace.yaml, the proven working pattern in this repo.
+# Do not add a `packages:` key here: the workspace member dirs do not exist in
+# the image at install time.
+allowBuilds:
+  esbuild: true
+  unrs-resolver: true
