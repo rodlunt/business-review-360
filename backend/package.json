@@ -31,7 +31,7 @@
     "@anthropic-ai/sdk": "^0.117.1",
     "@react-email/components": "^1.0.12",
     "@react-email/render": "^2.1.0",
-    "@sentry/node": "^10.70.0",
+    "@sentry/node": "^11.8.0",
     "argon2": "^0.45.1",
     "bad-words": "^4.1.5",
     "bcrypt": "6.0.0",
